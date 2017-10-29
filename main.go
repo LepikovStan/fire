@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"flag"
 )
 
 func readFile(path string) []string {
@@ -28,6 +29,17 @@ func makeMatrix(mlength int) [][]string {
 		matrix[i] = make([]string, mlength)
 		for j := 0; j < mlength; j++ {
 			matrix[i][j] = "turn off"
+		}
+	}
+	return matrix
+}
+
+func makeMatrixD(mlength int) [][]int {
+	matrix := make([][]int, mlength)
+	for i := 0; i < mlength; i++ {
+		matrix[i] = make([]int, mlength)
+		for j := 0; j < mlength; j++ {
+			matrix[i][j] = 0
 		}
 	}
 	return matrix
@@ -60,11 +72,7 @@ func parseCommand(command string) (string, []int64, []int64) {
 	return commandType, xCoords, yCoords
 }
 
-func main() {
-	start := time.Now()
-	matrixLength := 1000
-	matrix := makeMatrix(matrixLength)
-	commands := readFile("input.txt")
+func execCommands(commands []string, matrix[][]string) [][]string {
 	for _, command := range commands {
 		commandType, xCoords, yCoords := parseCommand(command)
 		for y := yCoords[0]; y <= yCoords[1]; y++ {
@@ -81,19 +89,83 @@ func main() {
 			}
 		}
 	}
+	return matrix
+}
+
+func execCommandsD(commands []string, matrix[][]int) [][]int {
+	for _, command := range commands {
+		commandType, xCoords, yCoords := parseCommand(command)
+		for y := yCoords[0]; y <= yCoords[1]; y++ {
+			for x := xCoords[0]; x <= xCoords[1]; x++ {
+				if commandType == "toggle" {
+					matrix[y][x] += 2
+				} else if commandType == "turn on" {
+					matrix[y][x]++
+				} else {
+					matrix[y][x]--
+				}
+
+				if matrix[y][x] < 0 {
+					matrix[y][x] = 0
+				}
+			}
+		}
+	}
+	return matrix
+}
+
+func simple() {
+	matrixLength := 1000
+	matrix := makeMatrix(matrixLength)
+	commands := readFile("input.txt")
+	matrix = execCommands(commands, matrix)
 	turnOnCounter := 0
-	for i := 0; i < matrixLength; i++ {
-		for j := 0; j < matrixLength; j++ {
-			if matrix[i][j] == "turn on" {
+
+	for _, line := range(matrix) {
+		for _, cell := range(line) {
+			if cell == "turn on" {
 				turnOnCounter++
 			}
 		}
 	}
 
 	fmt.Println("Result = ", turnOnCounter)
+}
+
+func difficult() {
+	fmt.Println()
+	matrixLength := 1000
+	matrix := makeMatrixD(matrixLength)
+	commands := readFile("input.txt")
+	matrix = execCommandsD(commands, matrix)
+
+	brightnessCounter := 0
+	for _, line := range(matrix) {
+		for _, brightness := range(line) {
+			brightnessCounter += brightness
+		}
+	}
+
+	fmt.Println("Result = ", brightnessCounter)
+}
+
+var d bool
+func initFlags() {
+	flag.BoolVar(&d, "d", false, "")
+	flag.Parse()
+}
+
+func main() {
+	start := time.Now()
+	initFlags()
+	if d {
+		difficult()
+	} else {
+		simple()
+	}
 	end := time.Now()
 	fmt.Println(end.Sub(start))
 }
 
 // 400410
-
+// 15343601
